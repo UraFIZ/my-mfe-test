@@ -1,0 +1,17 @@
+{
+  "sourceRoot": "users-mfe/src",
+  "options": {
+    "outputPath": "dist/users-mfe",
+    "index": "users-mfe/src/index.html",
+    "main": "users-mfe/src/main.tsx",
+    "tsConfig": "users-mfe/tsconfig.app.json",
+    "assets": [
+      "users-mfe/src/favicon.ico",
+      "users-mfe/src/assets"
+    ],
+    "styles": [
+      "users-mfe/src/styles.css"
+    ],
+    "webpackConfig": "users-mfe/webpack.config.js"
+  }
+}

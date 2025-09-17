@@ -1,0 +1,17 @@
+{
+  "sourceRoot": "container/src",
+  "options": {
+    "outputPath": "dist/container",
+    "index": "container/src/index.html",
+    "main": "container/src/main.tsx",
+    "tsConfig": "container/tsconfig.app.json",
+    "assets": [
+      "container/src/favicon.ico",
+      "container/src/assets"
+    ],
+    "styles": [
+      "container/src/styles.css"
+    ],
+    "webpackConfig": "container/webpack.config.js"
+  }
+}
