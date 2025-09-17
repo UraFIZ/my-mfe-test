@@ -1,17 +1,69 @@
 {
+  "name": "dashboard-mfe",
+  "projectType": "application",
   "sourceRoot": "dashboard-mfe/src",
-  "options": {
-    "outputPath": "dist/dashboard-mfe",
-    "index": "dashboard-mfe/src/index.html",
-    "main": "dashboard-mfe/src/main.tsx",
-    "tsConfig": "dashboard-mfe/tsconfig.app.json",
-    "assets": [
-      "dashboard-mfe/src/favicon.ico",
-      "dashboard-mfe/src/assets"
-    ],
-    "styles": [
-      "dashboard-mfe/src/styles.css"
-    ],
-    "webpackConfig": "dashboard-mfe/webpack.config.cjs"
-  }
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "development",
+      "options": {
+        "outputPath": "dist/apps/dashboard-mfe",
+        "index": "dashboard-mfe/src/index.html",
+        "main": "dashboard-mfe/src/main.tsx",
+        "tsConfig": "dashboard-mfe/tsconfig.app.json",
+        "assets": [
+          "dashboard-mfe/src/favicon.ico",
+          "dashboard-mfe/src/assets"
+        ],
+        "styles": [
+          "dashboard-mfe/src/styles.css"
+        ],
+        "webpackConfig": "dashboard-mfe/webpack.config.cjs"
+      },
+      "configurations": {
+        "development": {
+          "dev": true,
+          "sourceMap": true
+        },
+        "production": {
+          "dev": false,
+          "optimization": true,
+          "sourceMap": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "dashboard-mfe:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "dashboard-mfe:build:development"
+        },
+        "production": {
+          "buildTarget": "dashboard-mfe:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "dashboard-mfe/src/**/*.ts",
+          "dashboard-mfe/src/**/*.tsx",
+          "dashboard-mfe/src/**/*.js",
+          "dashboard-mfe/src/**/*.jsx"
+        ]
+      }
+    }
+  },
+  "tags": []
 }
