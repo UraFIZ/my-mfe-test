@@ -1,8 +1,12 @@
+const path = require('path');
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
 const { getWebpackContainerConfig } = require('../tools/webpack/config.cjs');
 
-module.exports = composePlugins(withNx(), withReact(), (config) => {
+module.exports = composePlugins(
+  withNx({ tsConfig: path.join(__dirname, 'tsconfig.app.json') }),
+  withReact(),
+  (config) => {
   // Merge container configuration
   const containerConfig = getWebpackContainerConfig();
 
@@ -29,5 +33,6 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
     runtimeChunk: false,
   };
 
-  return config;
-});
+    return config;
+  }
+);

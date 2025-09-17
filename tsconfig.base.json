@@ -15,6 +15,10 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
+    "paths": {
+      "@my-mfe-test/shared": ["shared/src/index.ts"],
+      "@my-mfe-test/shared/*": ["shared/src/*"]
+    },
     "strictNullChecks": true,
     "strictFunctionTypes": false
   },

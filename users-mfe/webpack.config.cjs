@@ -1,8 +1,12 @@
+const path = require('path');
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
 const { getWebpackMFEConfig } = require('../tools/webpack/config.cjs');
 
-module.exports = composePlugins(withNx(), withReact(), (config) => {
+module.exports = composePlugins(
+  withNx({ tsConfig: path.join(__dirname, 'tsconfig.app.json') }),
+  withReact(),
+  (config) => {
   // Configure for Users MFE
   const mfeConfig = getWebpackMFEConfig(
     'usersMfe', // CRITICAL: This must match the name used in dynamic imports
@@ -35,5 +39,6 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
     runtimeChunk: false,
   };
 
-  return config;
-});
+    return config;
+  }
+);
