@@ -66,8 +66,16 @@ function startProcess(
     )
   );
 
+  const childEnv: NodeJS.ProcessEnv = { ...process.env, ...env };
+  // Ensure ts-node project settings stay scoped to the orchestrator only.
+  // Child Nx/webpack processes don't need the loader configuration and
+  // inheriting the TS_NODE_PROJECT path causes lookups relative to each
+  // project's working directory, triggering ENOENT errors for files outside
+  // their tree.
+  childEnv.TS_NODE_PROJECT = undefined;
+
   const childProcess = spawn(command, [], {
-    env: { ...process.env, ...env },
+    env: childEnv,
     shell: true,
     stdio: 'pipe',
   });
