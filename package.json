@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node --esm --experimentalSpecifierResolution=node --compilerOptions '{\"allowImportingTsExtensions\":true}' tools/scripts/startDev.ts",
-    "start:all": "ts-node --esm --experimentalSpecifierResolution=node --compilerOptions '{\"allowImportingTsExtensions\":true}' tools/scripts/startDev.ts --mfe users dashboard",
-    "start:users-only": "ts-node --esm --experimentalSpecifierResolution=node --compilerOptions '{\"allowImportingTsExtensions\":true}' tools/scripts/startDev.ts --mfe users",
-    "start:dashboard-only": "ts-node --esm --experimentalSpecifierResolution=node --compilerOptions '{\"allowImportingTsExtensions\":true}' tools/scripts/startDev.ts --mfe dashboard",
-    "start:container-only": "ts-node --esm --experimentalSpecifierResolution=node --compilerOptions '{\"allowImportingTsExtensions\":true}' tools/scripts/startDev.ts --container-only",
+    "start": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts",
+    "start:all": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts --mfe users dashboard",
+    "start:users-only": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts --mfe users",
+    "start:dashboard-only": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts --mfe dashboard",
+    "start:container-only": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts --container-only",
     "serve:users": "nx serve users-mfe",
     "serve:dashboard": "nx serve dashboard-mfe",
     "serve:container": "nx serve container",
@@ -75,5 +75,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^6.29.0"
-  }
+  },
+  "type": "module"
 }

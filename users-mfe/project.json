@@ -12,6 +12,6 @@
     "styles": [
       "users-mfe/src/styles.css"
     ],
-    "webpackConfig": "users-mfe/webpack.config.js"
+    "webpackConfig": "users-mfe/webpack.config.cjs"
   }
 }

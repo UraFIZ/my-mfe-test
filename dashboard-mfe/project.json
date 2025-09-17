@@ -12,6 +12,6 @@
     "styles": [
       "dashboard-mfe/src/styles.css"
     ],
-    "webpackConfig": "dashboard-mfe/webpack.config.js"
+    "webpackConfig": "dashboard-mfe/webpack.config.cjs"
   }
 }

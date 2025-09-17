@@ -1,6 +1,6 @@
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
-const { getWebpackMFEConfig } = require('../tools/webpack/config');
+const { getWebpackMFEConfig } = require('../tools/webpack/config.cjs');
 
 module.exports = composePlugins(withNx(), withReact(), (config) => {
   // Configure for Users MFE

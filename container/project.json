@@ -12,6 +12,6 @@
     "styles": [
       "container/src/styles.css"
     ],
-    "webpackConfig": "container/webpack.config.js"
+    "webpackConfig": "container/webpack.config.cjs"
   }
 }
