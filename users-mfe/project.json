@@ -1,17 +1,69 @@
 {
+  "name": "users-mfe",
+  "projectType": "application",
   "sourceRoot": "users-mfe/src",
-  "options": {
-    "outputPath": "dist/users-mfe",
-    "index": "users-mfe/src/index.html",
-    "main": "users-mfe/src/main.tsx",
-    "tsConfig": "users-mfe/tsconfig.app.json",
-    "assets": [
-      "users-mfe/src/favicon.ico",
-      "users-mfe/src/assets"
-    ],
-    "styles": [
-      "users-mfe/src/styles.css"
-    ],
-    "webpackConfig": "users-mfe/webpack.config.js"
-  }
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "development",
+      "options": {
+        "outputPath": "dist/apps/users-mfe",
+        "index": "users-mfe/src/index.html",
+        "main": "users-mfe/src/main.tsx",
+        "tsConfig": "users-mfe/tsconfig.app.json",
+        "assets": [
+          "users-mfe/src/favicon.ico",
+          "users-mfe/src/assets"
+        ],
+        "styles": [
+          "users-mfe/src/styles.css"
+        ],
+        "webpackConfig": "users-mfe/webpack.config.cjs"
+      },
+      "configurations": {
+        "development": {
+          "dev": true,
+          "sourceMap": true
+        },
+        "production": {
+          "dev": false,
+          "optimization": true,
+          "sourceMap": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "users-mfe:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "users-mfe:build:development"
+        },
+        "production": {
+          "buildTarget": "users-mfe:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "users-mfe/src/**/*.ts",
+          "users-mfe/src/**/*.tsx",
+          "users-mfe/src/**/*.js",
+          "users-mfe/src/**/*.jsx"
+        ]
+      }
+    }
+  },
+  "tags": []
 }

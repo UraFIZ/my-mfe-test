@@ -1,17 +1,69 @@
 {
+  "name": "container",
+  "projectType": "application",
   "sourceRoot": "container/src",
-  "options": {
-    "outputPath": "dist/container",
-    "index": "container/src/index.html",
-    "main": "container/src/main.tsx",
-    "tsConfig": "container/tsconfig.app.json",
-    "assets": [
-      "container/src/favicon.ico",
-      "container/src/assets"
-    ],
-    "styles": [
-      "container/src/styles.css"
-    ],
-    "webpackConfig": "container/webpack.config.js"
-  }
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "development",
+      "options": {
+        "outputPath": "dist/apps/container",
+        "index": "container/src/index.html",
+        "main": "container/src/main.tsx",
+        "tsConfig": "container/tsconfig.app.json",
+        "assets": [
+          "container/src/favicon.ico",
+          "container/src/assets"
+        ],
+        "styles": [
+          "container/src/styles.css"
+        ],
+        "webpackConfig": "container/webpack.config.cjs"
+      },
+      "configurations": {
+        "development": {
+          "dev": true,
+          "sourceMap": true
+        },
+        "production": {
+          "dev": false,
+          "optimization": true,
+          "sourceMap": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "container:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "container:build:development"
+        },
+        "production": {
+          "buildTarget": "container:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "container/src/**/*.ts",
+          "container/src/**/*.tsx",
+          "container/src/**/*.js",
+          "container/src/**/*.jsx"
+        ]
+      }
+    }
+  },
+  "tags": []
 }

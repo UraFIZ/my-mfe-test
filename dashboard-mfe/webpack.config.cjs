@@ -1,15 +1,19 @@
+const path = require('path');
 const { composePlugins, withNx } = require('@nx/webpack');
 const { withReact } = require('@nx/react');
-const { getWebpackMFEConfig } = require('../tools/webpack/config');
+const { getWebpackMFEConfig } = require('../tools/webpack/config.cjs');
 
-module.exports = composePlugins(withNx(), withReact(), (config) => {
-  // Configure for Users MFE
+module.exports = composePlugins(
+  withNx({ tsConfig: path.join(__dirname, 'tsconfig.app.json') }),
+  withReact(),
+  (config) => {
+  // Configure for Dashboard MFE
   const mfeConfig = getWebpackMFEConfig(
-    'usersMfe', // CRITICAL: This must match the name used in dynamic imports
+    'dashboardMfe', // CRITICAL: This must match the name used in dynamic imports
     {
       './Module': './src/app/app.tsx', // Simple expose for now
     },
-    4201
+    4202
   );
 
   config.output = {
@@ -35,5 +39,6 @@ module.exports = composePlugins(withNx(), withReact(), (config) => {
     runtimeChunk: false,
   };
 
-  return config;
-});
+    return config;
+  }
+);
