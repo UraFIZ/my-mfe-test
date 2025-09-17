@@ -2,7 +2,6 @@ import { spawn, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
-import * as process from 'process';
 
 interface MfeConfig {
   name: string;

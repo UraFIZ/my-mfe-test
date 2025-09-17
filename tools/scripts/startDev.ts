@@ -7,7 +7,7 @@ import {
   getMfeAppNames,
   getBaseMfeNames,
   setupShutdownHandlers,
-} from '../utils/development';
+} from '../utils/development.ts';
 
 const startDev = async () => {
   console.log(chalk.cyan.bold('\n🎯 Module Federation Development Server'));
