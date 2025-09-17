@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { loadRemoteModule } from '../utils/load-remote-module';
 import { log } from '../utils/logger';
 
@@ -7,35 +7,52 @@ interface MfeLoaderProps {
     port: string | number;
 }
 
+type RemoteComponent = React.ComponentType<unknown>;
+type RemoteModule = RemoteComponent | { default?: RemoteComponent };
+
 export const MfeLoader: React.FC<MfeLoaderProps> = ({ mfeId, port }) => {
     const [Component, setComponent] = useState<React.ComponentType | null>(null);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         const loadMfe = async () => {
             try {
                 log(`Loading MFE: ${mfeId} from port ${port}`);
 
-                const module = await loadRemoteModule({
+                const module = await loadRemoteModule<RemoteModule>({
                     remoteEntry: `http://localhost:${port}/remoteEntry.js`,
                     remoteName: mfeId,
                     exposedModule: './Module',
                 });
 
-                if (module && module.default) {
+                if (!isMounted) {
+                    return;
+                }
+
+                if (isModuleWithDefault(module)) {
                     setComponent(() => module.default);
-                } else if (module) {
+                } else if (isComponent(module)) {
                     setComponent(() => module);
                 } else {
                     throw new Error(`Failed to load module from ${mfeId}`);
                 }
             } catch (err) {
+                if (!isMounted) {
+                    return;
+                }
+
                 console.error(`Error loading MFE ${mfeId}:`, err);
                 setError(err as Error);
             }
         };
 
         loadMfe();
+
+        return () => {
+            isMounted = false;
+        };
     }, [mfeId, port]);
 
     if (error) {
@@ -65,3 +82,16 @@ export const MfeLoader: React.FC<MfeLoaderProps> = ({ mfeId, port }) => {
         </Suspense>
     );
 };
+
+function isModuleWithDefault(module: RemoteModule): module is { default: RemoteComponent } {
+    return (
+        typeof module === 'object' &&
+        module !== null &&
+        'default' in module &&
+        typeof module.default === 'function'
+    );
+}
+
+function isComponent(module: RemoteModule): module is RemoteComponent {
+    return typeof module === 'function';
+}
