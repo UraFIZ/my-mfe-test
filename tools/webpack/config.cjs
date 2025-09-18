@@ -6,18 +6,22 @@ const SHARED_DEPS = {
   react: {
     singleton: true,
     requiredVersion: dependencies.react,
+    eager: false, // Don't load eagerly in MFEs
   },
   'react-dom': {
     singleton: true,
     requiredVersion: dependencies['react-dom'],
+    eager: false,
   },
   'react-router-dom': {
     singleton: true,
     requiredVersion: dependencies['react-router-dom'],
+    eager: false,
   },
   lodash: {
     singleton: true,
     requiredVersion: dependencies.lodash,
+    eager: false,
   },
 };
 
@@ -31,31 +35,57 @@ const BASE_CLIENT_CONFIG = {
       process: require.resolve('process/browser'),
     },
   },
+  module: {
+    rules: [
+      {
+        test: /\.m?js$/,
+        type: 'javascript/auto',
+      },
+    ],
+  },
 };
 
 // Get webpack configuration for MFEs
 function getWebpackMFEConfig(mfeName, exposes = {}, port) {
   return {
     ...BASE_CLIENT_CONFIG,
+    mode: 'development',
+    target: 'web',
     output: {
       uniqueName: mfeName,
       publicPath: `http://localhost:${port}/`,
+      scriptType: 'text/javascript',
+      chunkFormat: 'array-push',
     },
     devServer: {
       port,
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods':
+          'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+        'Access-Control-Allow-Headers':
+          'X-Requested-With, content-type, Authorization',
       },
       hot: true,
+      liveReload: true,
+      historyApiFallback: true,
     },
     plugins: [
       new ModuleFederationPlugin({
         name: mfeName,
         filename: 'remoteEntry.js',
         exposes,
-        shared: SHARED_DEPS,
+        shared: {
+          ...SHARED_DEPS,
+          // Add library: { type: 'var', name: mfeName } for better compatibility
+        },
+        library: { type: 'var', name: mfeName },
       }),
     ],
+    optimization: {
+      runtimeChunk: false,
+      splitChunks: false,
+    },
   };
 }
 
@@ -63,6 +93,8 @@ function getWebpackMFEConfig(mfeName, exposes = {}, port) {
 function getWebpackContainerConfig() {
   return {
     ...BASE_CLIENT_CONFIG,
+    mode: 'development',
+    target: 'web',
     output: {
       uniqueName: 'container',
       publicPath: 'http://localhost:4200/',
@@ -71,13 +103,19 @@ function getWebpackContainerConfig() {
       port: 4200,
       headers: {
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods':
+          'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+        'Access-Control-Allow-Headers':
+          'X-Requested-With, content-type, Authorization',
       },
       hot: true,
+      liveReload: true,
+      historyApiFallback: true,
     },
     plugins: [
       new ModuleFederationPlugin({
         name: 'container',
-        // No remotes - we'll load them dynamically
+        // We load remotes dynamically, so no static remotes
         shared: {
           ...SHARED_DEPS,
           // Container needs eager loading for shared deps
@@ -100,6 +138,9 @@ function getWebpackContainerConfig() {
         },
       }),
     ],
+    optimization: {
+      runtimeChunk: false,
+    },
   };
 }
 

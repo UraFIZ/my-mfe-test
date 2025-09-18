@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { MfeLoader, FEATURE_APP_ID, getMfePort } from '@my-mfe-test/shared';
+import groundcover from '@groundcover/browser'
 import './app.css';
 
 // Lazy-loaded MFE components
@@ -38,6 +39,22 @@ const Home = () => (
 );
 
 export function App() {
+  useEffect(() => {
+    if (process.env.NX_GROUNDCOVER_API_KEY && process.env.NX_GROUNDCOVER_DSN) {
+      groundcover.init({
+        apiKey: process.env.NX_GROUNDCOVER_API_KEY,
+        dsn: process.env.NX_GROUNDCOVER_DSN,
+        environment: 'staging',
+        appId: process.env.NX_GROUNDCOVER_APP_ID || 'hub',
+        cluster: 'default',
+        options: {
+          batchSize: 50,
+          sessionSampleRate: 1.0, // 100% sessions sampled for testing
+          debug: true, // Enable debug mode for testing
+        },
+      })
+    }
+  }, [])
   return (
     <div className="app">
       <header className="app-header">
