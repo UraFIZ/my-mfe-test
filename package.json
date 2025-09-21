@@ -8,6 +8,7 @@
     "start:users-only": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts --mfe users",
     "start:dashboard-only": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts --mfe dashboard",
     "start:container-only": "node --env-file=tools/.ts-node.env --loader ts-node/esm --experimental-specifier-resolution=node tools/scripts/startDev.ts --container-only",
+    "start:auth-server": "node server/index.mjs",
     "serve:users": "nx serve users-mfe",
     "serve:dashboard": "nx serve dashboard-mfe",
     "serve:container": "nx serve container",

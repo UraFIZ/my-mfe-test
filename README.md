@@ -1,77 +1,73 @@
-# MyMfeTest
+# Micro Frontend Authentication Testbed
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+This workspace hosts a minimal Module Federation setup that reproduces the Groundcover/browser header issue with the smallest possible authentication surface area. The container app now handles login, protects the Users and Dashboard MFEs, and communicates with a lightweight Node.js backend that requires the custom headers involved in the original bug report.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+## What was added
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- **Authentication context** inside the container that stores a short-lived token, exposes login/logout helpers, and automatically injects the `Authorization`, `X-App-Env`, and `X-App-Domain` headers on every API request.
+- **Protected routes** that redirect unauthenticated visitors to `/login` and restore the attempted route after signing in.
+- **Login experience** with remember‑my‑email support to make repeated manual testing faster.
+- **Simple Node.js backend** (`server/index.mjs`) that keeps in-memory sessions, validates required headers, and returns the response shape described in the testing guide.
 
-## Finish your CI setup
+## Running the stack locally
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/Jo3L8dQZ5c)
+Open two terminals in the repository root and run:
 
+```bash
+# Terminal 1 – start the auth backend on http://localhost:4300
+npm run start:auth-server
 
-## Run tasks
-
-To run tasks with Nx use:
-
-```sh
-npx nx <target> <project-name>
+# Terminal 2 – start the container and both MFEs
+npm start
 ```
 
-For example:
+The container is available on [http://localhost:4200](http://localhost:4200). The Users MFE runs on port 4201 and the Dashboard MFE on port 4202.
 
-```sh
-npx nx build myproject
-```
+### Demo credentials
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+Use the following account to authenticate:
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- **Email:** `admin@example.com`
+- **Password:** `admin123`
 
-## Add new projects
+A second user (`analyst@example.com / analyst123`) is also configured so you can test multiple logins if needed.
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+## Backend endpoints
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
-```
+All routes expect JSON bodies, require the custom headers, and respond in the guide's format:
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+| Method | Path                | Description                          |
+| ------ | ------------------- | ------------------------------------ |
+| POST   | `/api/login`        | Validates credentials and returns `{ "results": { token, id, email, first_name, last_name } }` |
+| GET    | `/api/profile`      | Validates the bearer token and returns the user profile (and token) |
+| POST   | `/api/logout`       | Invalidates the current token        |
+| POST   | `/api/verify-token` | Convenience endpoint that simply checks the token and returns `{ "results": { "valid": true } }` |
+| GET    | `/api/health`       | Basic health probe without auth      |
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+Missing headers result in a `400` response so you can immediately see whether Groundcover stripped them.
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
-```
+## Required headers
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+Every authenticated request from the container includes the following headers. If any are missing the backend rejects the call, helping you reproduce the original issue quickly:
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- `Authorization: Bearer <token>`
+- `X-App-Env: <environment>` – defaults to `development` or the value of `NX_APP_ENV`
+- `X-App-Domain: <hostname>` – resolves to the browser's `window.location.hostname`
 
+## Environment variables
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The container accepts two optional variables:
 
-## Install Nx Console
+- `NX_AUTH_API_URL` – override the default backend URL (`http://localhost:4300`)
+- `NX_APP_ENV` – override the default environment header value (`development`)
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+Groundcover can still be enabled with the existing `NX_GROUNDCOVER_*` settings; the initialization logic remains unchanged.
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Behaviour summary
 
-## Useful links
+1. Visiting `/login` displays the demo form. Successful authentication persists the token and redirects back to the attempted route.
+2. Navigation to `/users` or `/dashboard` without a valid session redirects to the login page.
+3. Reloading the container attempts to restore the previous session by calling `/api/profile`.
+4. Logging out clears storage, informs the backend, and keeps Users/Dashboard inaccessible until the next successful login.
 
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+This setup mirrors the testing guide's expectations while matching the repository's existing dependencies (React 19, React Router 6) and keeps the implementation intentionally simple for fast experimentation.
