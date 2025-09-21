@@ -1,152 +1,189 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from './auth-context';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useLoginMutation } from './services/auth-api';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import {
+  selectIsAuthenticated,
+  selectRememberedEmail,
+  setRememberedEmail,
+} from './store/auth-slice';
 
-type LocationState = {
+interface LocationState {
   from?: string;
-};
+}
+
+const loginSchema = yup.object({
+  email: yup
+    .string()
+    .email('Enter a valid email address')
+    .required('Email is required'),
+  password: yup.string().required('Password is required'),
+});
+
+type LoginFormValues = yup.InferType<typeof loginSchema>;
 
 export const LoginPage: React.FC = () => {
-  const { login, isAuthenticated, isAuthenticating, rememberedEmail, updateRememberedEmail } = useAuth();
-  const [email, setEmail] = useState<string>(rememberedEmail);
-  const [password, setPassword] = useState<string>('');
-  const [rememberMe, setRememberMe] = useState<boolean>(rememberedEmail.length > 0);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const rememberedEmail = useAppSelector(selectRememberedEmail);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const [login, { isLoading }] = useLoginMutation();
+  const [formError, setFormError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState<boolean>(Boolean(rememberedEmail));
 
-  const redirectTo = useMemo(() => {
-    const state = location.state as LocationState | null;
-    return state?.from ?? '/';
+  const defaultEmail = useMemo(() => rememberedEmail ?? '', [rememberedEmail]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    getValues,
+  } = useForm<LoginFormValues>({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      email: defaultEmail,
+      password: '',
+    },
+  });
+
+  useEffect(() => {
+    setValue('email', defaultEmail);
+    setRememberMe(Boolean(defaultEmail));
+  }, [defaultEmail, setValue]);
+
+  const destination = useMemo(() => {
+    const state = location.state as LocationState | undefined;
+    return state?.from ?? '/dashboard';
   }, [location.state]);
 
-  useEffect(() => {
-    if (rememberedEmail) {
-      setEmail((current) => (current ? current : rememberedEmail));
-      setRememberMe(true);
-    } else {
-      setRememberMe(false);
-    }
-  }, [rememberedEmail]);
-
-  useEffect(() => {
-    if (isAuthenticated && !isSubmitting) {
-      navigate(redirectTo, { replace: true });
-    }
-  }, [isAuthenticated, navigate, redirectTo, isSubmitting]);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (isSubmitting) {
-      return;
-    }
-
-    const trimmedEmail = email.trim();
-
-    if (!trimmedEmail || !password.trim()) {
-      setError('Please provide both email and password.');
-      return;
-    }
-
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      await login(trimmedEmail, password, { rememberEmail: rememberMe });
-      navigate(redirectTo, { replace: true });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleRememberMeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRememberToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setRememberMe(checked);
 
-    if (!checked) {
-      updateRememberedEmail(null);
-    } else if (email.trim()) {
-      updateRememberedEmail(email.trim());
+    if (checked) {
+      dispatch(setRememberedEmail(getValues('email')));
+    } else {
+      dispatch(setRememberedEmail(undefined));
     }
   };
 
+  const handleFormSubmit = async (values: LoginFormValues) => {
+    setFormError(null);
+
+    try {
+      await login(values).unwrap();
+
+      if (rememberMe) {
+        dispatch(setRememberedEmail(values.email));
+      } else {
+        dispatch(setRememberedEmail(undefined));
+      }
+
+      navigate(destination, { replace: true });
+    } catch (error) {
+      let message = 'Unable to sign in. Please check your credentials and try again.';
+
+      if (typeof error === 'object' && error !== null) {
+        const candidate = error as { message?: string; data?: unknown };
+
+        if (candidate.message) {
+          message = candidate.message;
+        } else if (candidate.data && typeof candidate.data === 'object') {
+          const data = candidate.data as Record<string, unknown>;
+          if (typeof data.error === 'string') {
+            message = data.error;
+          } else if (typeof data.message === 'string') {
+            message = data.message;
+          } else if (Array.isArray(data.errors) && data.errors[0]?.message) {
+            message = String(data.errors[0].message);
+          }
+        }
+      }
+
+      setFormError(message);
+    }
+  };
+
+  if (isAuthenticated) {
+    return <Navigate to={destination} replace />;
+  }
+
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1>Sign in to continue</h1>
-        <p className="auth-subtitle">
-          Authenticate against the local Node.js backend to unlock both MFEs.
-        </p>
+    <Box
+      className="login-page"
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
+      }}
+    >
+      <Paper elevation={6} sx={{ width: '100%', maxWidth: 420, p: 4 }}>
+        <Typography variant="h5" component="h1" gutterBottom>
+          Welcome back
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={3}>
+          Sign in to reach the dashboard and micro frontends.
+        </Typography>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <label className="auth-field">
-            <span>Email</span>
-            <input
+        {formError ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {formError}
+          </Alert>
+        ) : null}
+
+        <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+          <Stack spacing={2}>
+            <TextField
+              label="Email"
               type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
-              required
-              disabled={isSubmitting || isAuthenticating}
+              fullWidth
+              {...register('email')}
+              error={Boolean(errors.email)}
+              helperText={errors.email?.message}
             />
-          </label>
-
-          <label className="auth-field">
-            <span>Password</span>
-            <input
+            <TextField
+              label="Password"
               type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter your password"
-              required
-              disabled={isSubmitting || isAuthenticating}
+              fullWidth
+              {...register('password')}
+              error={Boolean(errors.password)}
+              helperText={errors.password?.message}
             />
-          </label>
-
-          <label className="auth-remember">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={handleRememberMeChange}
-              disabled={isSubmitting || isAuthenticating}
+            <FormControlLabel
+              control={
+                <Checkbox checked={rememberMe} onChange={handleRememberToggle} />
+              }
+              label="Remember my email"
             />
-            <span>Remember my email on this device</span>
-          </label>
-
-          {error && <div className="auth-error">{error}</div>}
-
-          <button
-            type="submit"
-            className="btn-primary auth-submit"
-            disabled={isSubmitting || isAuthenticating}
-          >
-            {isSubmitting || isAuthenticating ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-
-        <div className="auth-hint">
-          <p>Demo account</p>
-          <ul>
-            <li>
-              <strong>Email:</strong> admin@example.com
-            </li>
-            <li>
-              <strong>Password:</strong> admin123
-            </li>
-          </ul>
-          <p>
-            Every request sends the <code>X-App-Env</code> and <code>X-App-Domain</code> headers so
-            you can reproduce the Groundcover stripping issue locally.
-          </p>
-        </div>
-      </div>
-    </div>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
