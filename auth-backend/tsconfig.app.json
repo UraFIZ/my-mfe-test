@@ -2,9 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
-    "module": "nodenext",
+    "module": "commonjs",
     "target": "es2020",
-    "moduleResolution": "nodenext",
+    "moduleResolution": "node",
     "types": ["node"],
     "lib": ["es2020"],
     "noEmitOnError": false
