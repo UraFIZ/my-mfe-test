@@ -25,10 +25,27 @@ app bar. Signing out clears the persisted token and returns to the login page.
 ```bash
 npm install
 npm start
+# in another terminal
+npm run serve:auth-backend
 ```
 
 The `npm start` script launches the container on <http://localhost:4200> together with
-the Users MFE (port 4201) and Dashboard MFE (port 4202).
+the Users MFE (port 4201) and Dashboard MFE (port 4202). The authentication backend
+listens on <http://localhost:4300/graphql> by default and automatically restarts when
+you rerun `nx serve auth-backend`.
+
+### Demo authentication backend
+
+The repository now ships with a zero-dependency Node.js GraphQL server tailored to the
+frontend contract. Start it with `npm run serve:auth-backend`. The backend validates
+credentials using the following simple rules:
+
+- The email must contain an `@` symbol.
+- The password cannot be empty.
+
+Successful logins generate an in-memory token and derive a friendly name from the email
+address (for example, `jane.doe@example.com` becomes **Jane Doe**). Sessions persist in
+memory until `logout` is called or the process restarts.
 
 ### Expected Authentication API
 
@@ -58,6 +75,6 @@ focus on the header-stripping behaviour:
 
 ## Next Steps
 
-A simple Node.js GraphQL backend can be plugged in to satisfy the operations above.
-Once available, the login form will function end-to-end without any further frontend
-changes.
+Extend the demo backend with persistent storage, connect it to your identity provider,
+or replace it with your production authentication service once you finish validating
+the Groundcover header behaviour.

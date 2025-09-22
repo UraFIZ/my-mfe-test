@@ -11,6 +11,7 @@
     "serve:users": "nx serve users-mfe",
     "serve:dashboard": "nx serve dashboard-mfe",
     "serve:container": "nx serve container",
+    "serve:auth-backend": "nx serve auth-backend",
     "build": "nx build",
     "build:all": "nx run-many --target=build --all",
     "build:affected": "nx affected:build",
