@@ -1,93 +1,112 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import {
+  Box,
+  CircularProgress,
+  CssBaseline,
+  ThemeProvider,
+  createTheme,
+} from '@mui/material';
+import groundcover from '@groundcover/browser';
 import { MfeLoader, FEATURE_APP_ID, getMfePort } from '@my-mfe-test/shared';
-import groundcover from '@groundcover/browser'
 import './app.css';
+import { LoginPage } from './login-page';
+import { ProtectedRoute } from './protected-route';
+import { store, persistor } from './store';
+import { useAppSelector } from './store/hooks';
+import { selectIsAuthenticated } from './store/auth-slice';
+import { SessionManager } from './session-manager';
 
-// Lazy-loaded MFE components
-const Users = () => (
+const theme = createTheme();
+
+const UsersApp: React.FC = () => (
   <MfeLoader
     port={getMfePort(FEATURE_APP_ID.USERS_MFE)}
     mfeId={FEATURE_APP_ID.USERS_MFE}
   />
 );
 
-const Dashboard = () => (
+const DashboardApp: React.FC = () => (
   <MfeLoader
     port={getMfePort(FEATURE_APP_ID.DASHBOARD_MFE)}
     mfeId={FEATURE_APP_ID.DASHBOARD_MFE}
   />
 );
 
-const Home = () => (
-  <div className="home-container">
-    <h1>🏠 Welcome to Module Federation Hub</h1>
-    <p>This is the container application that loads micro-frontends.</p>
-    <div className="mfe-cards">
-      <div className="mfe-card">
-        <h3>👥 Users MFE</h3>
-        <p>User management, profiles, and authentication</p>
-        <Link to="/users" className="btn-primary">Go to Users</Link>
-      </div>
-      <div className="mfe-card">
-        <h3>📊 Dashboard MFE</h3>
-        <p>Analytics, reports, and business intelligence</p>
-        <Link to="/dashboard" className="btn-primary">Go to Dashboard</Link>
-      </div>
-    </div>
-  </div>
-);
+const AppRoutes: React.FC = () => {
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
-export function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard/*" element={<DashboardApp />} />
+        <Route path="/users/*" element={<UsersApp />} />
+      </Route>
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to={isAuthenticated ? '/dashboard' : '/login'}
+            replace
+          />
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+const AppShell: React.FC = () => {
   useEffect(() => {
     if (process.env.NX_GROUNDCOVER_API_KEY && process.env.NX_GROUNDCOVER_DSN) {
       groundcover.init({
         apiKey: process.env.NX_GROUNDCOVER_API_KEY,
         dsn: process.env.NX_GROUNDCOVER_DSN,
-        environment: 'staging',
-        appId: process.env.NX_GROUNDCOVER_APP_ID || 'hub',
+        environment: process.env.NX_APP_ENV || 'development',
+        appId: process.env.NX_GROUNDCOVER_APP_ID || 'container',
         cluster: 'default',
         options: {
           batchSize: 50,
-          sessionSampleRate: 1.0, // 100% sessions sampled for testing
-          debug: true, // Enable debug mode for testing
+          sessionSampleRate: 1.0,
+          debug: true,
         },
-      })
+      });
     }
-  }, [])
+  }, []);
+
   return (
-    <div className="app">
-      <header className="app-header">
-        <h2>Module Federation Development Environment</h2>
-      </header>
+    <Box className="app-shell">
+      <SessionManager />
+      <AppRoutes />
+    </Box>
+  );
+};
 
-      <nav className="app-nav">
-        <Link to="/" className="nav-link">🏠 Home</Link>
-        <Link to="/users" className="nav-link">👥 Users</Link>
-        <Link to="/dashboard" className="nav-link">📊 Dashboard</Link>
-      </nav>
-
-      <main className="app-main">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/users/*" element={<Users />} />
-          <Route path="/dashboard/*" element={<Dashboard />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-
-      <footer className="app-footer">
-        <div className="dev-info">
-          <h4>🔧 Development Info</h4>
-          <ul>
-            <li><strong>Container:</strong> http://localhost:4200 (this app)</li>
-            <li><strong>Users MFE:</strong> http://localhost:4201</li>
-            <li><strong>Dashboard MFE:</strong> http://localhost:4202</li>
-          </ul>
-          <p className="start-info">💡 All MFEs are started automatically with <code>npm start</code></p>
-        </div>
-      </footer>
-    </div>
+export function App() {
+  return (
+    <Provider store={store}>
+      <PersistGate
+        loading={
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            minHeight="100vh"
+          >
+            <CircularProgress />
+          </Box>
+        }
+        persistor={persistor}
+      >
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <AppShell />
+        </ThemeProvider>
+      </PersistGate>
+    </Provider>
   );
 }
 

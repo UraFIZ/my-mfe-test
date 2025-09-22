@@ -1,0 +1,40 @@
+{
+  "name": "auth-backend",
+  "projectType": "application",
+  "sourceRoot": "auth-backend/src",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/auth-backend",
+        "main": "auth-backend/src/main.ts",
+        "tsConfig": "auth-backend/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "auth-backend:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "auth-backend/src/**/*.ts",
+          "auth-backend/src/**/*.tsx",
+          "auth-backend/src/**/*.js",
+          "auth-backend/src/**/*.jsx"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
